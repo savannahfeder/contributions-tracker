@@ -1,46 +1,90 @@
-# Getting Started with Create React App
+# GitHub and Twitter Contribution Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This tool helps you stay consistent with both your GitHub coding and Twitter posting. By tracking your activity on both platforms, it encourages regular contributions to your projects and engagement with your developer community.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- GitHub & Twitter contribution visualization
+- Tweet publishing functionality
+- Firestore integration for data persistence
 
-### `npm start`
+## Tech Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- **Frontend**: React with TypeScript and Tailwind CSS
+- **Backend**: Node.js with Express
+- **Database**: Firebase Firestore
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Prerequisites
 
-### `npm test`
+Before you begin, ensure you have the following:
+- Node.js and npm installed
+- A GitHub account and personal access token
+- A Twitter Developer account with API keys and tokens
+- A Firebase project set up with Firestore
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Installation
 
-### `npm run build`
+1. Clone the repository
+2. Navigate to the project directory
+3. Install dependencies for both frontend and backend
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Configuration
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Create a .env file in the root directory and another in the frontend directory. Add the following variables to the respective files:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Root .env (for backend):
 
-### `npm run eject`
+- TWITTER_BEARER_TOKEN
+- GITHUB_TOKEN
+- TWITTER_API_KEY
+- TWITTER_API_SECRET
+- TWITTER_ACCESS_TOKEN
+- FRONTEND_URL
+- PORT (default is 3001)
+- FIREBASE_SERVICE_ACCOUNT_KEY
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Frontend .env:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- REACT_APP_GITHUB_TOKEN
+- REACT_APP_GITHUB_USERNAME
+- REACT_APP_FIREBASE_API_KEY
+- REACT_APP_FIREBASE_AUTH_DOMAIN
+- REACT_APP_FIREBASE_PROJECT_ID
+- REACT_APP_FIREBASE_STORAGE_BUCKET
+- REACT_APP_FIREBASE_MESSAGING_SENDER_ID
+- REACT_APP_FIREBASE_APP_ID
+- REACT_APP_API_URL (use 'http://localhost:3001' for local development)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Usage
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+1. Start the backend server
+2. In a separate terminal, start the frontend development server
+3. Open your browser and navigate to the local address shown in your terminal (typically http://localhost:3000)
 
-## Learn More
+## Features and How to Use
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. GitHub Contributions: The app will automatically fetch and display your GitHub contribution graph using the provided GitHub token and username.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+2. Tweet Publishing: Use the interface to compose and publish tweets. This feature helps track your Twitter activity since the API doesn't allow direct fetching of tweets.
+
+3. Activity Dashboard: View your combined GitHub and Twitter activity in a single dashboard.
+
+## Contributing
+
+Contributions are more than welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a new branch for your feature
+3. Commit your changes
+4. Push to your fork
+5. Submit a pull request
+
+## Troubleshooting
+
+- Ensure all environment variables are correctly set
+- Check your API keys and tokens if you encounter authentication issues
+- For local development, make sure both frontend and backend servers are running
+
+## Support
+
+If you encounter any issues or have questions, please open an issue in the GitHub repository or message @savannahfeder on Twitter.
