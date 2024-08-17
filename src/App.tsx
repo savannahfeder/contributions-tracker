@@ -61,7 +61,6 @@ function App() {
           />
         </div>
         <div className="max-w-7xl mx-auto px-4 space-y-8">
-          <GitHubContributions darkMode={darkMode} />
           <TwitterContributions
             darkMode={darkMode}
             twitterContributions={twitterContributions}
@@ -69,6 +68,7 @@ function App() {
             tweetsError={tweetsError}
             setIsTweetModalOpen={setIsTweetModalOpen}
           />
+          <GitHubContributions darkMode={darkMode} />
         </div>
       </div>
       <TweetModal
