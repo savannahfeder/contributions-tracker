@@ -1,51 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 interface Tweet {
   id: string;
+  date: Date;
   text: string;
-  created_at: string;
 }
 
-const useFetchTweets = () => {
+export const useFetchTweets = () => {
   const [tweets, setTweets] = useState<Tweet[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTweets = async (username: string) => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    const fetchTweets = async () => {
+      try {
+        const tweetsRef = collection(db, "tweets");
+        const q = query(tweetsRef, orderBy("date", "desc"));
+        const querySnapshot = await getDocs(q);
+        const fetchedTweets = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date.toDate(),
+        })) as Tweet[];
 
-    try {
-      console.log(`Fetching tweets for username: ${username}`);
-      const response = await fetch(
-        `http://localhost:3001/api/tweets/${username}`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch tweets: ${response.status} ${response.statusText}`
-        );
+        setTweets(fetchedTweets);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to fetch tweets");
+        setLoading(false);
       }
+    };
 
-      const data = await response.json();
-      console.log(`Tweets data:`, data);
+    fetchTweets();
+  }, []);
 
-      if (!data.data || !Array.isArray(data.data)) {
-        throw new Error(
-          `Unexpected response format: 'data' property is missing or not an array`
-        );
-      }
-
-      setTweets(data.data.slice(0, 10)); // Get the 10 most recent tweets
-    } catch (err) {
-      console.error(`Error in fetchTweets:`, err);
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { tweets, loading, error, fetchTweets };
+  return { tweets, loading, error };
 };
-
-export default useFetchTweets;

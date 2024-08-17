@@ -27,3 +27,5 @@ yarn-error.log*
 /twitter-api-backend/.env
 /src/.env
 .env
+
+/twitter-api-backend/serviceAccountKey.json

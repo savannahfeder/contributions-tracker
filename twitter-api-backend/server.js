@@ -1,65 +1,60 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
+const OAuth = require("oauth-1.0a");
+const crypto = require("crypto");
+const multer = require("multer");
+const fs = require("fs");
+const FormData = require("form-data");
 require("dotenv").config();
 
-const app = express();
-app.use(cors());
+// Add Firebase Admin SDK
+const admin = require("firebase-admin");
 
-app.get("/api/tweets/:username", async (req, res) => {
-  const { username } = req.params;
-  const bearerToken = process.env.TWITTER_BEARER_TOKEN;
-
-  try {
-    // Fetch user ID
-    const userResponse = await axios.get(
-      `https://api.twitter.com/2/users/by/username/${username}`,
-      {
-        headers: { Authorization: `Bearer ${bearerToken}` },
-      }
-    );
-
-    const userId = userResponse.data.data.id;
-
-    // Fetch tweets
-    const tweetsResponse = await axios.get(
-      `https://api.twitter.com/2/users/${userId}/tweets`,
-      {
-        headers: { Authorization: `Bearer ${bearerToken}` },
-      }
-    );
-
-    res.json(tweetsResponse.data);
-  } catch (error) {
-    console.error("An error occurred:");
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error("Error data:", error.response.data);
-      console.error("Error status:", error.response.status);
-      console.error("Error headers:", error.response.headers);
-      res.status(error.response.status).json({
-        error: "An error occurred while fetching tweets",
-        details: error.response.data,
-      });
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error("Error request:", error.request);
-      res.status(500).json({
-        error: "No response received from Twitter API",
-        details: "The request was made but no response was received",
-      });
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error("Error message:", error.message);
-      res.status(500).json({
-        error: "An error occurred while setting up the request",
-        details: error.message,
-      });
-    }
-    console.error("Error config:", error.config);
-  }
+// Initialize Firebase Admin SDK
+const serviceAccount = require("./ServiceAccountKey.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
 });
+
+// Initialize Firestore
+const db = admin.firestore();
+
+const app = express();
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+// Apply CORS middleware to all routes
+app.use(cors(corsOptions));
+
+// Body parser middleware
+app.use(express.json());
+
+// Set up multer for handling file uploads
+const upload = multer({ dest: "uploads/" });
+
+const oauth = OAuth({
+  consumer: {
+    key: process.env.TWITTER_API_KEY,
+    secret: process.env.TWITTER_API_SECRET,
+  },
+  signature_method: "HMAC-SHA1",
+  hash_function(base_string, key) {
+    return crypto.createHmac("sha1", key).update(base_string).digest("base64");
+  },
+});
+
+const token = {
+  key: process.env.TWITTER_ACCESS_TOKEN,
+  secret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
+};
 
 app.get("/api/github-contributions", async (req, res) => {
   const githubToken = process.env.GITHUB_TOKEN;
@@ -131,13 +126,128 @@ app.get("/api/github-contributions", async (req, res) => {
   }
 });
 
+async function uploadMedia(file) {
+  const mediaType = file.mimetype;
+  const mediaData = fs.readFileSync(file.path);
+
+  const uploadUrl = "https://upload.twitter.com/1.1/media/upload.json";
+
+  const form = new FormData();
+  form.append("media", mediaData, {
+    filename: file.originalname,
+    contentType: mediaType,
+  });
+  form.append("media_category", "tweet_image"); // Adjust this based on your media type
+
+  const authHeader = oauth.toHeader(
+    oauth.authorize(
+      {
+        url: uploadUrl,
+        method: "POST",
+      },
+      token
+    )
+  );
+
+  try {
+    const response = await axios.post(uploadUrl, form, {
+      headers: {
+        ...authHeader,
+        ...form.getHeaders(),
+      },
+    });
+
+    // Clean up the uploaded file
+    fs.unlinkSync(file.path);
+
+    return response.data.media_id_string;
+  } catch (error) {
+    console.error(
+      "Error uploading media:",
+      error.response ? error.response.data : error.message
+    );
+    throw error;
+  }
+}
+
+app.post("/api/create-tweet", upload.single("media"), async (req, res) => {
+  const { text } = req.body;
+  let mediaId;
+
+  try {
+    if (req.file) {
+      mediaId = await uploadMedia(req.file);
+    }
+
+    const createTweetUrl = "https://api.twitter.com/2/tweets";
+    const tweetData = { text };
+    if (mediaId) {
+      tweetData.media = { media_ids: [mediaId] };
+    }
+
+    const oauthHeader = oauth.toHeader(
+      oauth.authorize(
+        {
+          url: createTweetUrl,
+          method: "POST",
+        },
+        token
+      )
+    );
+
+    const createTweetResponse = await axios.post(createTweetUrl, tweetData, {
+      headers: {
+        ...oauthHeader,
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Add the new tweet to Firestore
+    const tweetRef = await db.collection("tweets").add({
+      date: admin.firestore.FieldValue.serverTimestamp(),
+      text: text,
+    });
+
+    console.log("New tweet added to Firestore with ID: ", tweetRef.id);
+
+    res.json({
+      ...createTweetResponse.data,
+      isDraft: false,
+      firestoreId: tweetRef.id,
+      text: text,
+    });
+  } catch (error) {
+    console.error("Error adding tweet to Firestore:", error.message);
+    res.status(500).json({
+      error: "An error occurred while adding the tweet to Firestore",
+      details: error.message,
+    });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log("Environment Variables:");
   console.log(
-    `Twitter Bearer Token: ${
-      process.env.TWITTER_BEARER_TOKEN ? "Set" : "Not set"
-    }`
+    "TWITTER_API_KEY:",
+    process.env.TWITTER_API_KEY ? "Set" : "Not set"
   );
-  console.log(`GitHub Token: ${process.env.GITHUB_TOKEN ? "Set" : "Not set"}`);
+  console.log(
+    "TWITTER_API_SECRET:",
+    process.env.TWITTER_API_SECRET ? "Set" : "Not set"
+  );
+  console.log(
+    "TWITTER_ACCESS_TOKEN:",
+    process.env.TWITTER_ACCESS_TOKEN ? "Set" : "Not set"
+  );
+  console.log(
+    "TWITTER_ACCESS_TOKEN_SECRET:",
+    process.env.TWITTER_ACCESS_TOKEN_SECRET ? "Set" : "Not set"
+  );
+  console.log(
+    "TWITTER_BEARER_TOKEN:",
+    process.env.TWITTER_BEARER_TOKEN ? "Set" : "Not set"
+  );
+  console.log("GITHUB_TOKEN:", process.env.GITHUB_TOKEN ? "Set" : "Not set");
 });

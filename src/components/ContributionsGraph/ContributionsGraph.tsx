@@ -29,7 +29,12 @@ const ContributionsGraph: React.FC<ContributionsGraphProps> = ({
   const allDays = eachDayOfInterval({ start: startDate, end: endDate });
 
   const getDayData = (date: Date): ContributionDay => {
-    const foundDay = data.find((day) => day.date.getTime() === date.getTime());
+    const foundDay = data.find(
+      (day) =>
+        day.date.getFullYear() === date.getFullYear() &&
+        day.date.getMonth() === date.getMonth() &&
+        day.date.getDate() === date.getDate()
+    );
     return foundDay || { date, count: 0 };
   };
 

@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from "react";
 import ContributionsGraph from "./components/ContributionsGraph/ContributionsGraph";
 import DarkModeToggle from "./components/DarkModeToggle";
+import TweetModal from "./components/modals/TweetModal";
 import useFetchGithubContributions from "./hooks/useFetchGithubContributions";
+import { useCreateTweet } from "./hooks/useCreateTweet";
+import { useFetchTweets } from "./hooks/useFetchTweets";
 import {
   subYears,
   subMonths,
@@ -12,6 +15,7 @@ import {
   parseISO,
   addDays,
 } from "date-fns";
+import { Twitter } from "lucide-react";
 
 const getContributionsForPeriod = (
   period: "week" | "month" | "year",
@@ -31,7 +35,7 @@ const getContributionsForPeriod = (
       startDate = subYears(endDate, 1);
       break;
     default:
-      startDate = subYears(endDate, 1); // Default to year view
+      startDate = subYears(endDate, 1);
   }
 
   return data
@@ -45,42 +49,46 @@ const getContributionsForPeriod = (
 function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [twitterView, setTwitterView] = useState<"week" | "month" | "year">(
-    "year"
+    "week"
   );
   const [githubView, setGithubView] = useState<"week" | "month" | "year">(
     "year"
   );
+  const [isTweetModalOpen, setIsTweetModalOpen] = useState(false);
   const {
     contributions: githubContributions,
     loading: githubLoading,
     error: githubError,
   } = useFetchGithubContributions();
+  const {
+    createTweet,
+    isLoading: isTweetLoading,
+    error: tweetError,
+  } = useCreateTweet();
+  const {
+    tweets,
+    loading: tweetsLoading,
+    error: tweetsError,
+  } = useFetchTweets();
 
-  const generateSampleData = () => {
-    const endDate = new Date();
-    const startDate = subYears(endDate, 1);
-    const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
-    return dateRange.map((date) => {
-      const rand = Math.random();
-      let count;
-      if (rand < 0.3) {
-        count = 0;
-      } else if (rand < 0.8) {
-        count = Math.floor(Math.random() * 5) + 1;
-      } else if (rand < 0.95) {
-        count = Math.floor(Math.random() * 10) + 6;
-      } else {
-        count = Math.floor(Math.random() * 15) + 16;
-      }
-      return { date, count };
+  const twitterContributions = useMemo(() => {
+    if (!tweets) return [];
+    const contributionMap = new Map();
+    tweets.forEach((tweet) => {
+      const date = startOfDay(new Date(tweet.date));
+      const dateKey = date.toISOString().split("T")[0];
+      const count = contributionMap.get(dateKey) || 0;
+      contributionMap.set(dateKey, count + 1);
     });
-  };
-
-  const twitterSampleData = useMemo(() => generateSampleData(), []);
+    return Array.from(contributionMap, ([dateKey, count]) => ({
+      date: new Date(dateKey),
+      count,
+    }));
+  }, [tweets]);
 
   const twitterContributionsCount = useMemo(
-    () => getContributionsForPeriod(twitterView, twitterSampleData),
-    [twitterView, twitterSampleData]
+    () => getContributionsForPeriod(twitterView, twitterContributions),
+    [twitterView, twitterContributions]
   );
 
   const githubContributionsCount = useMemo(
@@ -104,31 +112,68 @@ function App() {
     contributions: { date: Date; count: number }[]
   ) => {
     return contributions.map((contribution) => {
-      const date =
-        contribution.date instanceof Date
-          ? contribution.date
-          : parseISO(contribution.date as unknown as string);
-      // Adjust for GitHub's day starting at midnight UTC
-      const adjustedDate = addDays(date, 1);
+      let date = contribution.date;
+      if (!(date instanceof Date)) {
+        date = new Date(date);
+      }
       return {
         ...contribution,
-        date: startOfDay(adjustedDate),
+        date: startOfDay(date),
       };
     });
   };
 
   const processedTwitterData = useMemo(
-    () => preprocessContributions(twitterSampleData),
-    [twitterSampleData]
+    () => preprocessContributions(twitterContributions),
+    [twitterContributions]
   );
   const processedGithubData = useMemo(
     () => preprocessContributions(githubContributions),
     [githubContributions]
   );
 
+  const handleTweetSubmit = async (text: string, media: File | null) => {
+    try {
+      const result = await createTweet({ text, media: media || undefined });
+      if (result) {
+        console.log("Tweet created:", result);
+        // You might want to update your Twitter contributions data here
+        // For example, you could refetch the Twitter data or update the state manually
+        setIsTweetModalOpen(false);
+      } else {
+        throw new Error("Failed to create tweet. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating tweet:", error);
+      throw error;
+    }
+  };
+
+  const getContributionsPeriod = (view: "week" | "month" | "year") => {
+    const endDate = new Date();
+    let startDate: Date;
+
+    switch (view) {
+      case "week":
+        startDate = subWeeks(endDate, 1);
+        break;
+      case "month":
+        startDate = subMonths(endDate, 1);
+        break;
+      case "year":
+        startDate = subYears(endDate, 1);
+        break;
+    }
+
+    return `${format(startDate, "MMM d, yyyy")} to ${format(
+      endDate,
+      "MMM d, yyyy"
+    )}`;
+  };
+
   return (
     <div className={`${darkMode ? "dark" : ""}`}>
-      <div className="transition-colors duration-200 dark:bg-[#0c111b] min-h-screen pt-16">
+      <div className="transition-colors duration-200 dark:bg-[#0c111b] min-h-screen pt-8">
         <div className="fixed top-4 right-4">
           <DarkModeToggle
             darkMode={darkMode}
@@ -136,41 +181,6 @@ function App() {
           />
         </div>
         <div className="max-w-7xl mx-auto px-4 space-y-8">
-          {/* Twitter Contributions Container */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-800">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-              <div className="mb-4 sm:mb-0">
-                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-2">
-                  Twitter Contributions
-                </h1>
-                <p className="text-sm text-gray-500 font-light dark:text-gray-400">
-                  {twitterContributionsCount} contributions in the last{" "}
-                  {twitterView}
-                </p>
-              </div>
-              <button
-                onClick={() => toggleView(twitterView, setTwitterView)}
-                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
-              >
-                {twitterView.charAt(0).toUpperCase() + twitterView.slice(1)}
-              </button>
-            </div>
-            <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
-              <ContributionsGraph
-                data={processedTwitterData}
-                darkMode={darkMode}
-                view={twitterView}
-              />
-            </div>
-            <div className="mt-4 text-sm text-gray-500 font-light dark:text-gray-400">
-              <p>
-                Contributions from{" "}
-                {format(subYears(new Date(), 1), "MMM d, yyyy")} to{" "}
-                {format(new Date(), "MMM d, yyyy")}
-              </p>
-            </div>
-          </div>
-
           {/* GitHub Contributions Container */}
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-800">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -204,15 +214,63 @@ function App() {
               )}
             </div>
             <div className="mt-4 text-sm text-gray-500 font-light dark:text-gray-400">
-              <p>
-                Contributions from{" "}
-                {format(subYears(new Date(), 1), "MMM d, yyyy")} to{" "}
-                {format(new Date(), "MMM d, yyyy")}
-              </p>
+              <p>Contributions from {getContributionsPeriod(githubView)}</p>
+            </div>
+          </div>
+          {/* Twitter Contributions Container */}
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-800">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+              <div className="mb-4 sm:mb-0">
+                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-2">
+                  Twitter Contributions
+                </h1>
+                <p className="text-sm text-gray-500 font-light dark:text-gray-400">
+                  {twitterContributionsCount} contributions in the last{" "}
+                  {twitterView}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setIsTweetModalOpen(true)}
+                  className="px-3 py-1 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-md hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors duration-200 font-medium text-sm flex items-center space-x-1"
+                >
+                  <Twitter size={16} />
+                  <span>Tweet</span>
+                </button>
+                <button
+                  onClick={() => toggleView(twitterView, setTwitterView)}
+                  className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
+                >
+                  {twitterView.charAt(0).toUpperCase() + twitterView.slice(1)}
+                </button>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
+              {tweetsLoading ? (
+                <p>Loading Twitter data...</p>
+              ) : tweetsError ? (
+                <p>Error loading Twitter data: {tweetsError}</p>
+              ) : (
+                <ContributionsGraph
+                  data={processedTwitterData}
+                  darkMode={darkMode}
+                  view={twitterView}
+                />
+              )}
+            </div>
+            <div className="mt-4 text-sm text-gray-500 font-light dark:text-gray-400">
+              <p>Contributions from {getContributionsPeriod(twitterView)}</p>
             </div>
           </div>
         </div>
       </div>
+      <TweetModal
+        isOpen={isTweetModalOpen}
+        onClose={() => setIsTweetModalOpen(false)}
+        onSubmit={handleTweetSubmit}
+        isLoading={isTweetLoading}
+        error={tweetError}
+      />
     </div>
   );
 }
