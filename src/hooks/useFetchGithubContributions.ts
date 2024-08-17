@@ -10,12 +10,12 @@ const useFetchGithubContributions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
   useEffect(() => {
     const fetchContributions = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:3001/api/github-contributions"
-        );
+        const response = await fetch(API_URL);
         if (!response.ok) {
           throw new Error("Failed to fetch GitHub contributions");
         }

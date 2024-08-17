@@ -137,7 +137,7 @@ async function uploadMedia(file) {
     filename: file.originalname,
     contentType: mediaType,
   });
-  form.append("media_category", "tweet_image"); // Adjust this based on your media type
+  form.append("media_category", "tweet_image");
 
   const authHeader = oauth.toHeader(
     oauth.authorize(
@@ -228,26 +228,4 @@ app.post("/api/create-tweet", upload.single("media"), async (req, res) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log("Environment Variables:");
-  console.log(
-    "TWITTER_API_KEY:",
-    process.env.TWITTER_API_KEY ? "Set" : "Not set"
-  );
-  console.log(
-    "TWITTER_API_SECRET:",
-    process.env.TWITTER_API_SECRET ? "Set" : "Not set"
-  );
-  console.log(
-    "TWITTER_ACCESS_TOKEN:",
-    process.env.TWITTER_ACCESS_TOKEN ? "Set" : "Not set"
-  );
-  console.log(
-    "TWITTER_ACCESS_TOKEN_SECRET:",
-    process.env.TWITTER_ACCESS_TOKEN_SECRET ? "Set" : "Not set"
-  );
-  console.log(
-    "TWITTER_BEARER_TOKEN:",
-    process.env.TWITTER_BEARER_TOKEN ? "Set" : "Not set"
-  );
-  console.log("GITHUB_TOKEN:", process.env.GITHUB_TOKEN ? "Set" : "Not set");
 });
