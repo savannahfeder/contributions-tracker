@@ -10,14 +10,7 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
-// Log the config (make sure to remove this before deploying)
-console.log("Firebase Config:", firebaseConfig);
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-// Log the app and db instances
-console.log("Firebase App:", app);
-console.log("Firestore DB:", db);
 
 export { db };

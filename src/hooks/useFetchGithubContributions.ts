@@ -15,7 +15,7 @@ const useFetchGithubContributions = () => {
   useEffect(() => {
     const fetchContributions = async () => {
       try {
-        const response = await fetch(API_URL);
+        const response = await fetch(API_URL + "/api/github-contributions");
         if (!response.ok) {
           throw new Error("Failed to fetch GitHub contributions");
         }
