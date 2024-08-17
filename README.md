@@ -1,6 +1,6 @@
 # GitHub and Twitter Contribution Tracker
 
-This tool helps you stay consistent with both your GitHub coding and Twitter posting. By tracking your activity on both platforms, it encourages regular contributions to your projects and engagement with your developer community.
+This contributions tracker motivates you to be more consistent with GitHub commits and Twitter posts.
 
 ## Features
 
