@@ -12,7 +12,7 @@ require("dotenv").config();
 const admin = require("firebase-admin");
 
 // Initialize Firebase Admin SDK
-const serviceAccount = require("./ServiceAccountKey.json");
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -226,6 +226,17 @@ app.post("/api/create-tweet", upload.single("media"), async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${server.address().port}`);
+});
+
+server.on("error", (e) => {
+  if (e.code === "EADDRINUSE") {
+    console.log("Address in use, retrying...");
+    setTimeout(() => {
+      server.close();
+      server.listen(0); // This will choose a random available port
+    }, 1000);
+  }
 });
