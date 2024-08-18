@@ -1,8 +1,8 @@
-# GitHub and Twitter Contribution Tracker
+# GitHub and Twitter Contribution Tracker 
 
 This contribution tracker motivates you to be more consistent with GitHub commits and Twitter posts.
 
-![image](https://github.com/user-attachments/assets/640bc95d-58cc-47f0-b6b5-033065ebf9bd)
+![image](https://github.com/user-attachments/assets/ba6c7ab7-0516-44bc-9782-047f0193fa39)
 
 
 ## Features
