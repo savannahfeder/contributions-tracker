@@ -88,6 +88,10 @@ Contributions are more than welcome! Please follow these steps:
 - Check your API keys and tokens if you encounter authentication issues
 - For local development, make sure both frontend and backend servers are running
 
+## Next Steps
+- [ ] Fix time-zone issues (might post on Aug 17th but it registers on frontend as Aug 16th)
+- [ ] Stripe integration
+
 ## Support
 
 If you encounter any issues or have questions, please open an issue in the GitHub repository or message @savannahfeder on Twitter.
