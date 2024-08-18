@@ -28,7 +28,9 @@ export const useCreateTweet = () => {
         formData.append("media", media);
       }
 
-      const response = await fetch("http://localhost:3001/api/create-tweet", {
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
+      const response = await fetch(API_URL + "/api/create-tweet", {
         method: "POST",
         body: formData,
       });
