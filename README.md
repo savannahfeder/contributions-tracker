@@ -2,7 +2,7 @@
 
 This contribution tracker motivates you to be more consistent with GitHub commits and Twitter posts.
 
-![image](https://github.com/user-attachments/assets/ba6c7ab7-0516-44bc-9782-047f0193fa39)
+![image](https://github.com/user-attachments/assets/16f38c23-f397-4b44-b5fe-7acdc9ef5928)
 
 
 ## Features
