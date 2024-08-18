@@ -90,8 +90,11 @@ Contributions are more than welcome! Please follow these steps:
 
 ## Next Steps
 - [ ] Fix time-zone issues (might post on Aug 17th but it registers on frontend as Aug 16th)
-- [ ] Stripe integration
 - [ ] Cache results daily to avoid long spin-up times calling backend functions
+- [ ] **Focus sessions:**
+  - [ ] Play study/focus/lo-fi music from screen
+  - [ ] Track time worked
+- [ ] Stripe integration (?)
 
 ## Support
 
