@@ -96,6 +96,14 @@ Contributions are more than welcome! Please follow these steps:
   - [ ] Play study/focus/lo-fi music from screen
   - [ ] Track time worked
 - [ ] Stripe integration (?)
+- [ ] Fix bug with uploading certain media files to Twitter, eg. large mp4s:
+      
+```
+Error uploading media: {
+  request: '/1.1/media/upload.json',
+  error: 'media type unrecognized.'
+}
+```
 
 ## Support
 
