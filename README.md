@@ -60,9 +60,9 @@ Frontend .env:
 
 ## Usage
 
-1. Start the backend server
-2. In a separate terminal, start the frontend development server
-3. Open your browser and navigate to the local address shown in your terminal (typically http://localhost:3000)
+1. Start the frontend development server (`npm start`)
+2. In a separate terminal, start the backend server (`cd api-backend; npm start`)
+4. Open your browser and navigate to the local address shown in your terminal (typically http://localhost:3000)
 
 ## Features and How to Use
 
