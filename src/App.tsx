@@ -3,6 +3,7 @@ import DarkModeToggle from "./components/DarkModeToggle";
 import TweetModal from "./components/modals/TweetModal";
 import GitHubContributions from "./components/GitHubContributions";
 import TwitterContributions from "./components/TwitterContributions";
+import MusicPlayer from "./components/MusicPlayer";
 import { useCreateTweet } from "./hooks/useCreateTweet";
 import { useFetchTweets, Tweet } from "./hooks/useFetchTweets";
 import { startOfDay, format } from "date-fns";
@@ -71,6 +72,9 @@ function App() {
             setIsTweetModalOpen={setIsTweetModalOpen}
           />
           <GitHubContributions darkMode={darkMode} />
+        </div>
+        <div className="fixed bottom-4 right-4">
+          <MusicPlayer darkMode={darkMode} />
         </div>
       </div>
       <TweetModal

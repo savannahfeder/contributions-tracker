@@ -16,7 +16,7 @@ interface GitHubContributionsProps {
 
 function GitHubContributions({ darkMode }: GitHubContributionsProps) {
   const [githubView, setGithubView] = useState<"week" | "month" | "year">(
-    "month"
+    "week"
   );
   const {
     contributions: githubContributions,
