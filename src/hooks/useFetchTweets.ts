@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { parseISO, addDays } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 
-interface Tweet {
-  id: string;
+interface RawTweet {
+  date: string;
+  count: number;
+}
+
+export interface Tweet {
   date: Date;
-  text: string;
+  count: number;
 }
 
 export const useFetchTweets = () => {
@@ -13,28 +17,39 @@ export const useFetchTweets = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
   useEffect(() => {
     const fetchTweets = async () => {
       try {
-        const tweetsRef = collection(db, "tweets");
-        const q = query(tweetsRef, orderBy("date", "desc"));
-        const querySnapshot = await getDocs(q);
-        const fetchedTweets = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date.toDate(),
-        })) as Tweet[];
+        const response = await fetch(`${API_URL}/api/tweets?t=${Date.now()}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch tweets");
+        }
+        const data: RawTweet[] = await response.json();
 
-        setTweets(fetchedTweets);
-        setLoading(false);
+        const processedTweets = data.map((tweet: RawTweet) => {
+          const utcDate = parseISO(tweet.date);
+          const adjustedDate = addDays(utcDate, 1);
+          const pstDate = toZonedTime(adjustedDate, "America/Los_Angeles");
+          return {
+            date: pstDate,
+            count: tweet.count,
+          };
+        });
+
+        setTweets(processedTweets);
       } catch (err) {
-        setError("Failed to fetch tweets");
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
+      } finally {
         setLoading(false);
       }
     };
 
     fetchTweets();
-  }, []);
+  }, [API_URL]);
 
   return { tweets, loading, error };
 };

@@ -1,6 +1,8 @@
 import React from "react";
-import { startOfYear, subDays, eachDayOfInterval } from "date-fns";
+import { eachDayOfInterval, format, subDays } from "date-fns";
 import ContributionCell from "./ContributionCell";
+import { Contribution } from "../../hooks/useFetchGithubContributions";
+import { getStartDate } from "../../utils/contributionsUtils";
 
 interface ContributionDay {
   date: Date;
@@ -8,7 +10,7 @@ interface ContributionDay {
 }
 
 interface ContributionsGraphProps {
-  data: ContributionDay[];
+  data: Contribution[];
   darkMode: boolean;
   view: "week" | "month" | "year";
 }
@@ -21,19 +23,15 @@ const ContributionsGraph: React.FC<ContributionsGraphProps> = ({
   const endDate = new Date();
   const startDate =
     view === "year"
-      ? startOfYear(endDate)
-      : view === "month"
-      ? subDays(endDate, 30)
-      : subDays(endDate, 6);
+      ? getStartDate(view)
+      : subDays(endDate, view === "week" ? 6 : 30);
 
-  const allDays = eachDayOfInterval({ start: startDate, end: endDate });
+  const days = eachDayOfInterval({ start: startDate, end: endDate });
 
-  const getDayData = (date: Date): ContributionDay => {
+  const getDayData = (date: Date): Contribution => {
+    const dateKey = format(date, "yyyy-MM-dd");
     const foundDay = data.find(
-      (day) =>
-        day.date.getFullYear() === date.getFullYear() &&
-        day.date.getMonth() === date.getMonth() &&
-        day.date.getDate() === date.getDate()
+      (day) => format(day.date, "yyyy-MM-dd") === dateKey
     );
     return foundDay || { date, count: 0 };
   };
@@ -64,7 +62,7 @@ const ContributionsGraph: React.FC<ContributionsGraphProps> = ({
     <div className="w-full flex justify-center">
       <div className={`inline-block ${getContainerClasses()}`}>
         <div className={`inline-grid ${getGridClasses()}`}>
-          {allDays.map((day, index) => {
+          {days.map((day, index) => {
             const { count } = getDayData(day);
             return (
               <ContributionCell

@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
+import { parseISO } from "date-fns";
 
-interface Contribution {
+interface RawContribution {
+  date: string;
+  count: number;
+}
+
+export interface Contribution {
   date: Date;
   count: number;
 }
@@ -15,17 +21,20 @@ const useFetchGithubContributions = () => {
   useEffect(() => {
     const fetchContributions = async () => {
       try {
-        const response = await fetch(API_URL + "/api/github-contributions");
+        const response = await fetch(
+          `${API_URL}/api/github-contributions?t=${Date.now()}`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch GitHub contributions");
         }
-        const data = await response.json();
-        setContributions(
-          data.map((contrib: Contribution) => ({
-            ...contrib,
-            date: new Date(contrib.date),
-          }))
-        );
+        const data: RawContribution[] = await response.json();
+
+        const processedContributions = data.map((contrib: RawContribution) => ({
+          date: parseISO(contrib.date),
+          count: contrib.count,
+        }));
+
+        setContributions(processedContributions);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "An unknown error occurred"
@@ -36,7 +45,7 @@ const useFetchGithubContributions = () => {
     };
 
     fetchContributions();
-  }, []);
+  }, [API_URL]);
 
   return { contributions, loading, error };
 };

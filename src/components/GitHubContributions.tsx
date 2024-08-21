@@ -7,30 +7,33 @@ import {
   preprocessContributions,
   toggleView,
 } from "../utils/contributionsUtils";
+import { format } from "date-fns";
+import { getStartDate } from "../utils/contributionsUtils";
 
 interface GitHubContributionsProps {
   darkMode: boolean;
 }
 
 function GitHubContributions({ darkMode }: GitHubContributionsProps) {
-  const [githubView, setGithubView] = useState<"year" | "week" | "month">(
-    "year"
+  const [githubView, setGithubView] = useState<"week" | "month" | "year">(
+    "month"
   );
   const {
     contributions: githubContributions,
-    loading: githubLoading,
-    error: githubError,
+    loading,
+    error,
   } = useFetchGithubContributions();
 
-  const processedGithubData = useMemo(
-    () => preprocessContributions(githubContributions),
-    [githubContributions]
-  );
+  const processedGithubData = useMemo(() => {
+    const startDate = getStartDate(githubView);
+    return preprocessContributions(githubContributions).filter(
+      (contrib) => contrib.date >= startDate
+    );
+  }, [githubContributions, githubView]);
 
-  const githubContributionsCount = useMemo(
-    () => getContributionsForPeriod(githubView, githubContributions),
-    [githubView, githubContributions]
-  );
+  const githubContributionsCount = useMemo(() => {
+    return getContributionsForPeriod(githubView, githubContributions);
+  }, [githubView, githubContributions]);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-800">
@@ -51,10 +54,10 @@ function GitHubContributions({ darkMode }: GitHubContributionsProps) {
         </button>
       </div>
       <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
-        {githubLoading ? (
+        {loading ? (
           <p>Loading GitHub data...</p>
-        ) : githubError ? (
-          <p>Error loading GitHub data: {githubError}</p>
+        ) : error ? (
+          <p>Error loading GitHub data: {error}</p>
         ) : (
           <ContributionsGraph
             data={processedGithubData}

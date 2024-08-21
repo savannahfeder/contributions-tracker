@@ -24,7 +24,10 @@ const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin:
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:3000"
+      : process.env.FRONTEND_URL,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -93,36 +96,15 @@ app.get("/api/github-contributions", async (req, res) => {
         (week) => week.contributionDays
       );
 
-    const contributions = contributionDays.map((day) => ({
-      date: new Date(day.date),
-      count: day.contributionCount,
-    }));
-
-    res.json(contributions);
+    res.json(
+      contributionDays.map((day) => ({
+        date: day.date,
+        count: day.contributionCount,
+      }))
+    );
   } catch (error) {
-    console.error("An error occurred while fetching GitHub contributions:");
-    if (error.response) {
-      console.error("Error data:", error.response.data);
-      console.error("Error status:", error.response.status);
-      console.error("Error headers:", error.response.headers);
-      res.status(error.response.status).json({
-        error: "An error occurred while fetching GitHub contributions",
-        details: error.response.data,
-      });
-    } else if (error.request) {
-      console.error("Error request:", error.request);
-      res.status(500).json({
-        error: "No response received from GitHub API",
-        details: "The request was made but no response was received",
-      });
-    } else {
-      console.error("Error message:", error.message);
-      res.status(500).json({
-        error: "An error occurred while setting up the request",
-        details: error.message,
-      });
-    }
-    console.error("Error config:", error.config);
+    console.error("Error fetching GitHub contributions:", error);
+    res.status(500).json({ error: "Failed to fetch GitHub contributions" });
   }
 });
 
@@ -208,8 +190,6 @@ app.post("/api/create-tweet", upload.single("media"), async (req, res) => {
       text: text,
     });
 
-    console.log("New tweet added to Firestore with ID: ", tweetRef.id);
-
     res.json({
       ...createTweetResponse.data,
       isDraft: false,
@@ -222,6 +202,38 @@ app.post("/api/create-tweet", upload.single("media"), async (req, res) => {
       error: "An error occurred while adding the tweet to Firestore",
       details: error.message,
     });
+  }
+});
+
+app.get("/api/tweets", async (req, res) => {
+  try {
+    const tweetsSnapshot = await db.collection("tweets").get();
+    const tweets = tweetsSnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        date: data.date.toDate().toISOString().split("T")[0],
+        count: 1,
+      };
+    });
+
+    const groupedTweets = tweets.reduce((acc, tweet) => {
+      if (acc[tweet.date]) {
+        acc[tweet.date].count += tweet.count;
+      } else {
+        acc[tweet.date] = tweet;
+      }
+      return acc;
+    }, {});
+
+    const sortedTweets = Object.values(groupedTweets).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    res.json(sortedTweets);
+  } catch (error) {
+    console.error("Error fetching tweets:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch tweets", details: error.message });
   }
 });
 

@@ -4,8 +4,9 @@ import TweetModal from "./components/modals/TweetModal";
 import GitHubContributions from "./components/GitHubContributions";
 import TwitterContributions from "./components/TwitterContributions";
 import { useCreateTweet } from "./hooks/useCreateTweet";
-import { useFetchTweets } from "./hooks/useFetchTweets";
-import { startOfDay } from "date-fns";
+import { useFetchTweets, Tweet } from "./hooks/useFetchTweets";
+import { startOfDay, format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -21,17 +22,18 @@ function App() {
     error: tweetsError,
   } = useFetchTweets();
 
-  const twitterContributions = useMemo(() => {
+  const processedTweets = useMemo(() => {
     if (!tweets) return [];
     const contributionMap = new Map();
-    tweets.forEach((tweet) => {
-      const date = startOfDay(new Date(tweet.date));
-      const dateKey = date.toISOString().split("T")[0];
+    tweets.forEach((tweet: Tweet) => {
+      const originalDate = new Date(tweet.date);
+      const pstDate = toZonedTime(originalDate, "America/Los_Angeles");
+      const dateKey = format(startOfDay(pstDate), "yyyy-MM-dd");
       const count = contributionMap.get(dateKey) || 0;
       contributionMap.set(dateKey, count + 1);
     });
-    return Array.from(contributionMap, ([dateKey, count]) => ({
-      date: new Date(dateKey),
+    return Array.from(contributionMap, ([date, count]) => ({
+      date: new Date(date),
       count,
     }));
   }, [tweets]);
@@ -63,7 +65,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 space-y-8">
           <TwitterContributions
             darkMode={darkMode}
-            twitterContributions={twitterContributions}
+            twitterContributions={processedTweets}
             tweetsLoading={tweetsLoading}
             tweetsError={tweetsError}
             setIsTweetModalOpen={setIsTweetModalOpen}

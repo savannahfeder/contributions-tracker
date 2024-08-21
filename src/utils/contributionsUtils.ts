@@ -1,4 +1,12 @@
-import { subYears, subMonths, subWeeks, format, startOfDay } from "date-fns";
+import {
+  subYears,
+  subMonths,
+  subWeeks,
+  format,
+  startOfDay,
+  startOfYear,
+  endOfDay,
+} from "date-fns";
 
 export const getContributionsForPeriod = (
   period: "week" | "month" | "year",
@@ -57,7 +65,7 @@ export const preprocessContributions = (
 };
 
 export const getContributionsPeriod = (view: "week" | "month" | "year") => {
-  const endDate = new Date();
+  const endDate = endOfDay(new Date());
   let startDate: Date;
 
   switch (view) {
@@ -68,7 +76,7 @@ export const getContributionsPeriod = (view: "week" | "month" | "year") => {
       startDate = subMonths(endDate, 1);
       break;
     case "year":
-      startDate = subYears(endDate, 1);
+      startDate = startOfYear(endDate);
       break;
   }
 
@@ -76,4 +84,16 @@ export const getContributionsPeriod = (view: "week" | "month" | "year") => {
     endDate,
     "MMM d, yyyy"
   )}`;
+};
+
+export const getStartDate = (view: "week" | "month" | "year") => {
+  const endDate = new Date();
+  switch (view) {
+    case "week":
+      return subWeeks(endDate, 1);
+    case "month":
+      return subMonths(endDate, 1);
+    case "year":
+      return startOfYear(endDate);
+  }
 };

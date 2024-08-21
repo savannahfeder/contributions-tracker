@@ -52,6 +52,8 @@ const ContributionCell: React.FC<ContributionCellProps> = ({
     }
   };
 
+  const formattedDate = format(day, "MMM d");
+
   return (
     <div className="relative group">
       <div
@@ -70,10 +72,7 @@ const ContributionCell: React.FC<ContributionCellProps> = ({
             transform: "translateX(-50%)",
           }}
         >
-          {`${count} contribution${count !== 1 ? "s" : ""} on ${format(
-            day,
-            "MMM d"
-          )}`}
+          {`${count} contribution${count !== 1 ? "s" : ""} on ${formattedDate}`}
         </div>
       )}
     </div>

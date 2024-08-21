@@ -7,10 +7,12 @@ import {
   preprocessContributions,
   toggleView,
 } from "../utils/contributionsUtils";
+import { Tweet } from "../hooks/useFetchTweets";
+import { format } from "date-fns";
 
 interface TwitterContributionsProps {
   darkMode: boolean;
-  twitterContributions: any[];
+  twitterContributions: Tweet[];
   tweetsLoading: boolean;
   tweetsError: string | null;
   setIsTweetModalOpen: (open: boolean) => void;
@@ -27,10 +29,9 @@ function TwitterContributions({
     "week"
   );
 
-  const processedTwitterData = useMemo(
-    () => preprocessContributions(twitterContributions),
-    [twitterContributions]
-  );
+  const processedTwitterData = useMemo(() => {
+    return preprocessContributions(twitterContributions);
+  }, [twitterContributions]);
 
   const twitterContributionsCount = useMemo(
     () => getContributionsForPeriod(twitterView, twitterContributions),
