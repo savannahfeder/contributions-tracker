@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import DarkModeToggle from "./components/DarkModeToggle";
 import TweetModal from "./components/modals/TweetModal";
 import GitHubContributions from "./components/GitHubContributions";
@@ -31,6 +31,32 @@ function App() {
     lastFetchDate,
     refetch: refetchGithub,
   } = useFetchGithubContributions();
+
+  const [githubView, setGithubView] = useState<"week" | "month" | "year">(
+    () => {
+      return (
+        (localStorage.getItem("githubView") as "week" | "month" | "year") ||
+        "week"
+      );
+    }
+  );
+
+  const [twitterView, setTwitterView] = useState<"week" | "month" | "year">(
+    () => {
+      return (
+        (localStorage.getItem("twitterView") as "week" | "month" | "year") ||
+        "week"
+      );
+    }
+  );
+
+  useEffect(() => {
+    localStorage.setItem("githubView", githubView);
+  }, [githubView]);
+
+  useEffect(() => {
+    localStorage.setItem("twitterView", twitterView);
+  }, [twitterView]);
 
   const processedTweets = useMemo(() => {
     if (!tweets) return [];
@@ -79,6 +105,8 @@ function App() {
             tweetsLoading={tweetsLoading}
             tweetsError={tweetsError}
             setIsTweetModalOpen={setIsTweetModalOpen}
+            view={twitterView}
+            setView={setTwitterView}
           />
           <GitHubContributions
             darkMode={darkMode}
@@ -86,6 +114,8 @@ function App() {
             loading={githubLoading}
             error={githubError}
             lastFetchDate={lastFetchDate}
+            view={githubView}
+            setView={setGithubView}
           />
         </div>
         <MusicPlayer

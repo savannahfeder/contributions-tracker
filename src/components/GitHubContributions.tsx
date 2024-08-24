@@ -16,6 +16,8 @@ interface GitHubContributionsProps {
   loading: boolean;
   error: string | null;
   lastFetchDate: string | null;
+  view: "week" | "month" | "year";
+  setView: React.Dispatch<React.SetStateAction<"week" | "month" | "year">>;
 }
 
 interface Contribution {
@@ -29,21 +31,19 @@ function GitHubContributions({
   loading,
   error,
   lastFetchDate,
+  view,
+  setView,
 }: GitHubContributionsProps) {
-  const [githubView, setGithubView] = useState<"week" | "month" | "year">(
-    "week"
-  );
-
   const processedGithubData = useMemo(() => {
-    const startDate = getStartDate(githubView);
+    const startDate = getStartDate(view);
     return preprocessContributions(contributions).filter(
       (contrib) => contrib.date >= startDate
     );
-  }, [contributions, githubView]);
+  }, [contributions, view]);
 
   const githubContributionsCount = useMemo(() => {
-    return getContributionsForPeriod(githubView, contributions);
-  }, [githubView, contributions]);
+    return getContributionsForPeriod(view, contributions);
+  }, [view, contributions]);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-800">
@@ -53,14 +53,14 @@ function GitHubContributions({
             GitHub Contributions
           </h1>
           <p className="text-sm text-gray-500 font-light dark:text-gray-400">
-            {githubContributionsCount} contributions in the last {githubView}
+            {githubContributionsCount} contributions in the last {view}
           </p>
         </div>
         <button
-          onClick={() => toggleView(githubView, setGithubView)}
+          onClick={() => toggleView(view, setView)}
           className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
         >
-          {githubView.charAt(0).toUpperCase() + githubView.slice(1)}
+          {view.charAt(0).toUpperCase() + view.slice(1)}
         </button>
       </div>
       <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
@@ -72,12 +72,12 @@ function GitHubContributions({
           <ContributionsGraph
             data={processedGithubData}
             darkMode={darkMode}
-            view={githubView}
+            view={view}
           />
         )}
       </div>
       <div className="mt-4 text-sm text-gray-500 font-light dark:text-gray-400">
-        <p>Contributions from {getContributionsPeriod(githubView)}</p>
+        <p>Contributions from {getContributionsPeriod(view)}</p>
       </div>
     </div>
   );

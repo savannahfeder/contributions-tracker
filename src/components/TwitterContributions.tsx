@@ -16,6 +16,8 @@ interface TwitterContributionsProps {
   tweetsLoading: boolean;
   tweetsError: string | null;
   setIsTweetModalOpen: (open: boolean) => void;
+  view: "week" | "month" | "year";
+  setView: React.Dispatch<React.SetStateAction<"week" | "month" | "year">>;
 }
 
 function TwitterContributions({
@@ -24,18 +26,16 @@ function TwitterContributions({
   tweetsLoading,
   tweetsError,
   setIsTweetModalOpen,
+  view,
+  setView,
 }: TwitterContributionsProps) {
-  const [twitterView, setTwitterView] = useState<"week" | "month" | "year">(
-    "week"
-  );
-
   const processedTwitterData = useMemo(() => {
     return preprocessContributions(twitterContributions);
   }, [twitterContributions]);
 
   const twitterContributionsCount = useMemo(
-    () => getContributionsForPeriod(twitterView, twitterContributions),
-    [twitterView, twitterContributions]
+    () => getContributionsForPeriod(view, twitterContributions),
+    [view, twitterContributions]
   );
 
   return (
@@ -46,7 +46,7 @@ function TwitterContributions({
             Twitter Contributions
           </h1>
           <p className="text-sm text-gray-500 font-light dark:text-gray-400">
-            {twitterContributionsCount} contributions in the last {twitterView}
+            {twitterContributionsCount} contributions in the last {view}
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -58,10 +58,10 @@ function TwitterContributions({
             <span>Tweet</span>
           </button>
           <button
-            onClick={() => toggleView(twitterView, setTwitterView)}
+            onClick={() => toggleView(view, setView)}
             className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
           >
-            {twitterView.charAt(0).toUpperCase() + twitterView.slice(1)}
+            {view.charAt(0).toUpperCase() + view.slice(1)}
           </button>
         </div>
       </div>
@@ -74,12 +74,12 @@ function TwitterContributions({
           <ContributionsGraph
             data={processedTwitterData}
             darkMode={darkMode}
-            view={twitterView}
+            view={view}
           />
         )}
       </div>
       <div className="mt-4 text-sm text-gray-500 font-light dark:text-gray-400">
-        <p>Contributions from {getContributionsPeriod(twitterView)}</p>
+        <p>Contributions from {getContributionsPeriod(view)}</p>
       </div>
     </div>
   );
