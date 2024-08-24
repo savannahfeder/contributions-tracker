@@ -8,6 +8,8 @@ import { useCreateTweet } from "./hooks/useCreateTweet";
 import { useFetchTweets, Tweet } from "./hooks/useFetchTweets";
 import { startOfDay, format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
+import ReloadButton from "./components/ReloadButton";
+import useFetchGithubContributions from "./hooks/useFetchGithubContributions";
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -22,6 +24,13 @@ function App() {
     loading: tweetsLoading,
     error: tweetsError,
   } = useFetchTweets();
+  const {
+    contributions: githubContributions,
+    loading: githubLoading,
+    error: githubError,
+    lastFetchDate,
+    refetch: refetchGithub,
+  } = useFetchGithubContributions();
 
   const processedTweets = useMemo(() => {
     if (!tweets) return [];
@@ -71,11 +80,20 @@ function App() {
             tweetsError={tweetsError}
             setIsTweetModalOpen={setIsTweetModalOpen}
           />
-          <GitHubContributions darkMode={darkMode} />
+          <GitHubContributions
+            darkMode={darkMode}
+            contributions={githubContributions}
+            loading={githubLoading}
+            error={githubError}
+            lastFetchDate={lastFetchDate}
+          />
         </div>
-        <div className="fixed bottom-4 right-4">
-          <MusicPlayer darkMode={darkMode} />
-        </div>
+        <MusicPlayer
+          darkMode={darkMode}
+          reloadButton={
+            <ReloadButton onClick={refetchGithub} darkMode={darkMode} />
+          }
+        />
       </div>
       <TweetModal
         isOpen={isTweetModalOpen}

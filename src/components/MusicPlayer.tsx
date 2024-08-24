@@ -1,12 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Play, Pause, Music, X } from "lucide-react";
+import { Play, Pause, Music } from "lucide-react";
 import SongSelectionModal from "./SongSelectionModal";
 
 interface MusicPlayerProps {
   darkMode: boolean;
+  reloadButton: React.ReactNode;
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = ({ darkMode }) => {
+const MusicPlayer: React.FC<MusicPlayerProps> = ({
+  darkMode,
+  reloadButton,
+}) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoId, setVideoId] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -114,27 +118,30 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ darkMode }) => {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-50 flex items-center space-x-1">
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className={`p-2 rounded-full transition-all duration-200 ${
-            darkMode
-              ? "text-gray-400 hover:text-white hover:bg-gray-800"
-              : "text-gray-500 hover:text-gray-800 hover:bg-gray-200"
-          }`}
-        >
-          <Music size={16} />
-        </button>
-        <button
-          onClick={togglePlayPause}
-          className={`p-3 rounded-full bg-opacity-80 hover:bg-opacity-100 transition-all duration-200 shadow-md ${
-            darkMode
-              ? "bg-gray-800 text-white hover:bg-gray-700"
-              : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
-          }`}
-        >
-          {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-        </button>
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end space-y-2">
+        {reloadButton}
+        <div className="flex items-center space-x-1">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className={`p-2 rounded-full transition-all duration-200 ${
+              darkMode
+                ? "text-gray-400 hover:text-white hover:bg-gray-800"
+                : "text-gray-500 hover:text-gray-800 hover:bg-gray-200"
+            }`}
+          >
+            <Music size={16} />
+          </button>
+          <button
+            onClick={togglePlayPause}
+            className={`p-3 rounded-full bg-opacity-80 hover:bg-opacity-100 transition-all duration-200 shadow-md ${
+              darkMode
+                ? "bg-gray-800 text-white hover:bg-gray-700"
+                : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
+            }`}
+          >
+            {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+          </button>
+        </div>
       </div>
       <div id="youtube-player" style={{ display: "none" }}></div>
       <SongSelectionModal

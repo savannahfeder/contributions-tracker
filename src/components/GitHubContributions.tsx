@@ -7,33 +7,43 @@ import {
   preprocessContributions,
   toggleView,
 } from "../utils/contributionsUtils";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { getStartDate } from "../utils/contributionsUtils";
 
 interface GitHubContributionsProps {
   darkMode: boolean;
+  contributions: Contribution[];
+  loading: boolean;
+  error: string | null;
+  lastFetchDate: string | null;
 }
 
-function GitHubContributions({ darkMode }: GitHubContributionsProps) {
+interface Contribution {
+  date: Date;
+  count: number;
+}
+
+function GitHubContributions({
+  darkMode,
+  contributions,
+  loading,
+  error,
+  lastFetchDate,
+}: GitHubContributionsProps) {
   const [githubView, setGithubView] = useState<"week" | "month" | "year">(
     "week"
   );
-  const {
-    contributions: githubContributions,
-    loading,
-    error,
-  } = useFetchGithubContributions();
 
   const processedGithubData = useMemo(() => {
     const startDate = getStartDate(githubView);
-    return preprocessContributions(githubContributions).filter(
+    return preprocessContributions(contributions).filter(
       (contrib) => contrib.date >= startDate
     );
-  }, [githubContributions, githubView]);
+  }, [contributions, githubView]);
 
   const githubContributionsCount = useMemo(() => {
-    return getContributionsForPeriod(githubView, githubContributions);
-  }, [githubView, githubContributions]);
+    return getContributionsForPeriod(githubView, contributions);
+  }, [githubView, contributions]);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-800">
