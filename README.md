@@ -9,6 +9,7 @@ This contribution tracker motivates you to be more consistent with GitHub commit
 
 - GitHub & Twitter contribution visualization
 - Tweet publishing functionality
+- Plays music from YouTube for focused work sessions
 - Firestore integration for data persistence
 
 ## Tech Stack
