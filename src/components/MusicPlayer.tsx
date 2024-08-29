@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Pause, Music } from "lucide-react";
 import SongSelectionModal from "./SongSelectionModal";
 
@@ -18,15 +18,44 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
   const [isYouTubeApiReady, setIsYouTubeApiReady] = useState(false);
   const playerRef = useRef<YT.Player | null>(null);
 
+  // Use useCallback to memoize these functions
+  const onPlayerReady = useCallback((event: YT.PlayerEvent) => {
+    setIsPlaying(false);
+  }, []);
+
+  const onPlayerStateChange = useCallback((event: YT.OnStateChangeEvent) => {
+    if (event.data === (window as any).YT.PlayerState.ENDED) {
+      setIsPlaying(false);
+    }
+  }, []);
+
+  const createPlayer = useCallback(
+    (id: string) => {
+      playerRef.current = new (window as any).YT.Player("youtube-player", {
+        height: "0",
+        width: "0",
+        videoId: id,
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1,
+        },
+        events: {
+          onReady: onPlayerReady,
+          onStateChange: onPlayerStateChange,
+        },
+      });
+    },
+    [onPlayerReady, onPlayerStateChange]
+  );
+
   useEffect(() => {
     const savedVideoId = localStorage.getItem("youtubeVideoId");
     const savedVideoUrl = localStorage.getItem("youtubeVideoUrl");
-    if (savedVideoId) {
-      setVideoId(savedVideoId);
-    }
-    if (savedVideoUrl) {
-      setVideoUrl(savedVideoUrl);
-    }
+    if (savedVideoId) setVideoId(savedVideoId);
+    if (savedVideoUrl) setVideoUrl(savedVideoUrl);
 
     if (!(window as any).YT) {
       const tag = document.createElement("script");
@@ -57,46 +86,22 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
         createPlayer(videoId);
       }
     }
-  }, [isYouTubeApiReady, videoId]);
+  }, [isYouTubeApiReady, videoId, createPlayer]);
 
-  const createPlayer = (id: string) => {
-    playerRef.current = new (window as any).YT.Player("youtube-player", {
-      height: "0",
-      width: "0",
-      videoId: id,
-      playerVars: {
-        autoplay: 0, // Set autoplay to 0 to prevent automatic playback
-        controls: 0,
-      },
-      events: {
-        onReady: onPlayerReady,
-        onStateChange: onPlayerStateChange,
-      },
-    });
-  };
-
-  const onPlayerReady = (event: YT.PlayerEvent) => {
-    // Don't automatically play the video
-    setIsPlaying(false);
-  };
-
-  const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
-    if (event.data === (window as any).YT.PlayerState.ENDED) {
-      setIsPlaying(false);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const id = extractVideoId(videoUrl);
-    if (id) {
-      setVideoId(id);
-      localStorage.setItem("youtubeVideoId", id);
-      localStorage.setItem("youtubeVideoUrl", videoUrl);
-      setIsModalOpen(false);
-      setIsPlaying(false); // Ensure it's set to paused when changing the video
-    }
-  };
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const id = extractVideoId(videoUrl);
+      if (id) {
+        setVideoId(id);
+        localStorage.setItem("youtubeVideoId", id);
+        localStorage.setItem("youtubeVideoUrl", videoUrl);
+        setIsModalOpen(false);
+        setIsPlaying(false); // Ensure it's set to paused when changing the video
+      }
+    },
+    [videoUrl]
+  );
 
   const extractVideoId = (url: string): string | null => {
     const regex =
@@ -105,7 +110,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
     return match ? match[1] : null;
   };
 
-  const togglePlayPause = () => {
+  const togglePlayPause = useCallback(() => {
     if (playerRef.current) {
       if (isPlaying) {
         playerRef.current.pauseVideo();
@@ -114,7 +119,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
       }
       setIsPlaying(!isPlaying);
     }
-  };
+  }, [isPlaying]);
 
   return (
     <>
@@ -156,4 +161,4 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
   );
 };
 
-export default MusicPlayer;
+export default React.memo(MusicPlayer);

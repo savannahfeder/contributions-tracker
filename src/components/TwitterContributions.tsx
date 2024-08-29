@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import ContributionsGraph from "./ContributionsGraph/ContributionsGraph";
 import { Twitter } from "lucide-react";
 import {
@@ -7,36 +7,75 @@ import {
   preprocessContributions,
   toggleView,
 } from "../utils/contributionsUtils";
-import { Tweet } from "../hooks/useFetchTweets";
-import { format } from "date-fns";
+import { useFetchTweets, Tweet } from "../hooks/useFetchTweets";
+import { useCreateTweet } from "../hooks/useCreateTweet";
+import { startOfDay, format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import TweetModal from "./modals/TweetModal";
 
 interface TwitterContributionsProps {
   darkMode: boolean;
-  twitterContributions: Tweet[];
-  tweetsLoading: boolean;
-  tweetsError: string | null;
-  setIsTweetModalOpen: (open: boolean) => void;
-  view: "week" | "month" | "year";
-  setView: React.Dispatch<React.SetStateAction<"week" | "month" | "year">>;
 }
 
-function TwitterContributions({
-  darkMode,
-  twitterContributions,
-  tweetsLoading,
-  tweetsError,
-  setIsTweetModalOpen,
-  view,
-  setView,
-}: TwitterContributionsProps) {
+function TwitterContributions({ darkMode }: TwitterContributionsProps) {
+  const [isTweetModalOpen, setIsTweetModalOpen] = useState(false);
+  const {
+    createTweet,
+    isLoading: isTweetLoading,
+    error: tweetError,
+  } = useCreateTweet();
+  const {
+    tweets,
+    loading: tweetsLoading,
+    error: tweetsError,
+  } = useFetchTweets();
+
+  const [view, setView] = useState<"week" | "month" | "year">(() => {
+    return (
+      (localStorage.getItem("twitterView") as "week" | "month" | "year") ||
+      "week"
+    );
+  });
+
+  useEffect(() => {
+    localStorage.setItem("twitterView", view);
+  }, [view]);
+
   const processedTwitterData = useMemo(() => {
-    return preprocessContributions(twitterContributions);
-  }, [twitterContributions]);
+    if (!tweets) return [];
+    const contributionMap = new Map();
+    tweets.forEach((tweet: Tweet) => {
+      const originalDate = new Date(tweet.date);
+      const pstDate = toZonedTime(originalDate, "America/Los_Angeles");
+      const dateKey = format(startOfDay(pstDate), "yyyy-MM-dd");
+      const count = contributionMap.get(dateKey) || 0;
+      contributionMap.set(dateKey, count + 1);
+    });
+    return Array.from(contributionMap, ([date, count]) => ({
+      date: new Date(date),
+      count,
+    }));
+  }, [tweets]);
 
   const twitterContributionsCount = useMemo(
-    () => getContributionsForPeriod(view, twitterContributions),
-    [view, twitterContributions]
+    () => getContributionsForPeriod(view, processedTwitterData),
+    [view, processedTwitterData]
   );
+
+  const handleTweetSubmit = async (text: string, media: File | null) => {
+    try {
+      const result = await createTweet({ text, media: media || undefined });
+      if (result) {
+        console.log("Tweet created:", result);
+        setIsTweetModalOpen(false);
+      } else {
+        throw new Error("Failed to create tweet. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating tweet:", error);
+      throw error;
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-800">
@@ -81,6 +120,13 @@ function TwitterContributions({
       <div className="mt-4 text-sm text-gray-500 font-light dark:text-gray-400">
         <p>Contributions from {getContributionsPeriod(view)}</p>
       </div>
+      <TweetModal
+        isOpen={isTweetModalOpen}
+        onClose={() => setIsTweetModalOpen(false)}
+        onSubmit={handleTweetSubmit}
+        isLoading={isTweetLoading}
+        error={tweetError}
+      />
     </div>
   );
 }

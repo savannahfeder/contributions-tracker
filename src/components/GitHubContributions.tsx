@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import ContributionsGraph from "./ContributionsGraph/ContributionsGraph";
 import useFetchGithubContributions from "../hooks/useFetchGithubContributions";
 import {
@@ -7,33 +7,32 @@ import {
   preprocessContributions,
   toggleView,
 } from "../utils/contributionsUtils";
-import { format, parseISO } from "date-fns";
 import { getStartDate } from "../utils/contributionsUtils";
+import { setRefetchGithub } from "../utils/githubRefetch";
 
 interface GitHubContributionsProps {
   darkMode: boolean;
-  contributions: Contribution[];
-  loading: boolean;
-  error: string | null;
-  lastFetchDate: string | null;
-  view: "week" | "month" | "year";
-  setView: React.Dispatch<React.SetStateAction<"week" | "month" | "year">>;
 }
 
-interface Contribution {
-  date: Date;
-  count: number;
-}
+function GitHubContributions({ darkMode }: GitHubContributionsProps) {
+  const { contributions, loading, error, refetch } =
+    useFetchGithubContributions();
 
-function GitHubContributions({
-  darkMode,
-  contributions,
-  loading,
-  error,
-  lastFetchDate,
-  view,
-  setView,
-}: GitHubContributionsProps) {
+  useEffect(() => {
+    setRefetchGithub(refetch);
+  }, [refetch]);
+
+  const [view, setView] = useState<"week" | "month" | "year">(() => {
+    return (
+      (localStorage.getItem("githubView") as "week" | "month" | "year") ||
+      "week"
+    );
+  });
+
+  useEffect(() => {
+    localStorage.setItem("githubView", view);
+  }, [view]);
+
   const processedGithubData = useMemo(() => {
     const startDate = getStartDate(view);
     return preprocessContributions(contributions).filter(
