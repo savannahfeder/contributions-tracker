@@ -79,12 +79,15 @@ function TwitterContributions({ darkMode }: TwitterContributionsProps) {
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-800">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
         <div className="mb-4 sm:mb-0">
-          <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-2">
-            Twitter Contributions
-          </h1>
-          <p className="text-sm text-gray-500 font-light dark:text-gray-400">
+          <div className="flex items-center">
+            <Twitter size={24} className="text-blue-400 mr-2" />
+            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
+              Twitter Contributions
+            </h1>
+          </div>
+          <p className="text-sm text-gray-500 font-light dark:text-gray-400 mt-2">
             {twitterContributionsCount} contributions in the last {view}
           </p>
         </div>

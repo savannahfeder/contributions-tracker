@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import DarkModeToggle from "./components/DarkModeToggle";
 import GitHubContributions from "./components/GitHubContributions";
-import TwitterContributions from "./components/TwitterContributions";
+import ReadingContributions from "./components/ReadingContributions";
 import MusicPlayer from "./components/MusicPlayer";
 import ReloadButton from "./components/ReloadButton";
 import { getRefetchGithub } from "./utils/githubRefetch";
@@ -18,7 +18,7 @@ function App() {
 
   return (
     <div className={`${darkMode ? "dark" : ""}`}>
-      <div className="transition-colors duration-200 dark:bg-[#0c111b] min-h-screen pt-8">
+      <div className="transition-colors duration-200 dark:bg-[#0c111b] min-h-screen pt-8 pb-4">
         <div className="fixed top-4 right-4">
           <DarkModeToggle
             darkMode={darkMode}
@@ -26,8 +26,8 @@ function App() {
           />
         </div>
         <div className="max-w-7xl mx-auto px-4 space-y-8">
-          {/* <TwitterContributions darkMode={darkMode} /> */}
           <GitHubContributions darkMode={darkMode} />
+          <ReadingContributions darkMode={darkMode} />
         </div>
         <MusicPlayer
           darkMode={darkMode}
