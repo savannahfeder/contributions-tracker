@@ -13,9 +13,15 @@ function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [musicUrl, setMusicUrl] = useState("");
-  const [showGithub, setShowGithub] = useState(true);
-  const [showReading, setShowReading] = useState(true);
-  const [showTwitter, setShowTwitter] = useState(false);
+  const [showGithub, setShowGithub] = useState(() => {
+    return localStorage.getItem("showGithub") !== "false";
+  });
+  const [showReading, setShowReading] = useState(() => {
+    return localStorage.getItem("showReading") !== "false"; // default to true if not set
+  });
+  const [showTwitter, setShowTwitter] = useState(() => {
+    return localStorage.getItem("showTwitter") === "true"; // default to false if not set
+  });
 
   useEffect(() => {
     const savedMusicUrl = localStorage.getItem("musicUrl");
@@ -27,6 +33,21 @@ function App() {
   const handleSetMusicUrl = (url: string) => {
     setMusicUrl(url);
     localStorage.setItem("musicUrl", url);
+  };
+
+  const handleSetShowGithub = (show: boolean) => {
+    setShowGithub(show);
+    localStorage.setItem("showGithub", show.toString());
+  };
+
+  const handleSetShowReading = (show: boolean) => {
+    setShowReading(show);
+    localStorage.setItem("showReading", show.toString());
+  };
+
+  const handleSetShowTwitter = (show: boolean) => {
+    setShowTwitter(show);
+    localStorage.setItem("showTwitter", show.toString());
   };
 
   const handleReload = () => {
@@ -68,11 +89,11 @@ function App() {
           musicUrl={musicUrl}
           setMusicUrl={handleSetMusicUrl}
           showGithub={showGithub}
-          setShowGithub={setShowGithub}
+          setShowGithub={handleSetShowGithub}
           showReading={showReading}
-          setShowReading={setShowReading}
+          setShowReading={handleSetShowReading}
           showTwitter={showTwitter}
-          setShowTwitter={setShowTwitter}
+          setShowTwitter={handleSetShowTwitter}
         />
       </div>
     </div>
